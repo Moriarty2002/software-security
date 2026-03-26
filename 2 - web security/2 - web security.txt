@@ -1,0 +1,86 @@
+2 - web security
+
+
+*******************    CSFR    *******************
+
+Navigato su www.example32.com, visualizzato i cookie che sono stati settati e attributo SameSite (sfrutto il fatto che il browser sa da dove parte la richiesta):
+None - invia cross site
+Lax - invia cross site SOLO verso dominio originale e SE user NAVIGA VOLONTARIAMENTE (es. link, invece image malevola con codice viene bloccata)
+Strict - ONLY same site
+
+NB: può aiutare a prevenire CSFR vedendo che ad esempio manca un cookie sul quale era stato disabilitato il cross-site
+
+PREVISIONI:
+ - Link A (same site): inviati tutti
+ - Link B (da attacker32 a example32, link): inviato cookie-normal, cookie-lax
+ - Link C (da attacker32 a example32, GET): inviato cookie-normal, cookie-lax
+ - Link D (da attacker32 a example32, POST): inviato solo cookie-normal
+
+TEST:
+ - Link A
+tutti i cookie sono stati inviati correttamente, questo per ogni possibile richiesta all'interno dello stesso dominio (es. anche POST)
+
+ - Link B
+ONLY cookie normal e lax, dato che l'utente ha intenzionalmente cliccato sul link
+
+- Link C
+ONLY cookie normal e lax, ANCHE SE é UNA GET malevola, perché teoricamente dovrebbero essere IDEMPOTENTI e NON MODIFICARE NULLA MA:
+
+If a lazy developer creates a state-changing action using a GET request—for example, a link like http://good-site.com/transfer?amount=1000&to=hacker—CSRF defenses that rely on checking the Origin header will completely fail. 
+Inoltre avrà accesso ai lax cookie.
+
+- Link D
+ONLY cookie normal, inoltre viene aggiunto il campo Origin negli header dato che POST  è un operazione che modifica una risorsa, così che server possa vedere da dove arriva la richiesta (in genere il campo referrer viene rimosso dai browser di default per questioni di privacy)
+
+
+__________________________________________________________________________________________________________________________
+
+
+
+*******************    XSS    *******************
+
+- SAMY - edit profilo con scritta 'SAMY IS MY HERO'
+
+Preso userGuid tramite js console accedendo al profilo di Samy
+Creato payload js e inserito nella description
+Testato funzionamento vedendo il profilo di Samy con l'account di Alice, mostrando la richiesta POST inviata automaticamente, partita dal codice stored
+
+- SAMY - worm
+
+Per il worm è stato aggiunto codice che si occupa di aggiungere lo script stesso al contenuto della descrizione, 
+così da far propagare lo script alla terza persona.
+Infine mostrate le richieste di edit fatte partire automaticamente.
+
+- CSP
+
+Bisogna modificare l file config di Apache per far si che tutti i possibili script js possano essere eseguiti in tutte le pagine http://www.example32a.com/ b e c
+
+. 32a
+tutto funziona già non essendo settati CSP
+
+. 32b
+unsafe-inline permette TUTTO, ma RICHIEDE di rimuovere le direttive con i nonce dato che altrimenti l'unsafe viene ignorato per sicurezza
+
+. 32c
+Analogo a 32b, ma config in php direttamente ora
+
+__________________________________________________________________________________________________________________________
+
+
+
+*******************    SQL INJECTION    *******************
+
+Vedo source code e osservo che login viene effettuato con string interpolation.
+Analogamente studio la query per l'edit info e anche qui si usa string interpolation, INOLTRE OSSERVO che per l'edit non viene effettuata autorizzazione, mi basta sapere id di Bobby nel next step.
+
+Prima parto con edit salario alice, basta inserire in un campo qualsiasi:    ',salary='10000
+
+Poi passo ad attaccare Boby (2 opzioni):
+
+- edito il suo salary direttamente con injection dal mio form di edit:	',salary='1' where name='Boby';#
+ poi edito la sua password (potevo anche fare tutto in una richiesta) con: ',Password=sha1("bob") where name='Boby';#
+
+- oppure mi basta usare:	Boby';# nel login per accedere al suo account o vedere il suo id
+
+
+Fatto il defense cambiando la query con il prepared statement
