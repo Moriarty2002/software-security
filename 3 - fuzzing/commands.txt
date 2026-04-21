@@ -1,0 +1,43 @@
+CC=afl-clang-fast ./config -d -g -no-shared
+AFL_USE_ASAN=1 make build_libs
+
+
+AFL_USE_ASAN=1 afl-clang-fast++ handshake.cc -o handshake openssl/libssl.a openssl/libcrypto.a -I openssl/include -ldl
+
+echo 'potato' > input/seed.txt
+
+afl-fuzz -i input/ -o afl_out -m none -- ./handshake
+
+
+-------------------------------------------------------------   ----------------------------------------------------------------------
+*****   EXTRA: NO ASAN   ******
+cp -r openssl openssl_no_asan
+cd openssl_no_asan
+make clean
+CC=clang ./config -d -g -no-shared
+make build_libs
+clang++ handshake.cc -o handshake_no_asan openssl_no_asan/libssl.a openssl_no_asan/libcrypto.a -I openssl_no_asan/include -ldl
+
+-------------------------------------------------------------   ----------------------------------------------------------------------
+*****   EXTRA: VALGRIND   ******
+compilato senza ASAN e gcc (non clang)
+
+cd openssl_no_asan
+make clean
+CC=gcc ./config -d -g -no-shared
+make build_libs
+g++ handshake.cc -o handshake_valgrind openssl_valgrind/libssl.a openssl_valgrind/libcrypto.a -I openssl_valgrind/include -ldl
+
+
+-------------------------------------------------------------   ----------------------------------------------------------------------
+*****   EXTRA: ASAN persisten mode  ******
+
+AFL_USE_ASAN=1 afl-clang-fast++ handshake_persistent.cc -o handshake_persistent openssl/libssl.a openssl/libcrypto.a -I openssl/include -ldl
+
+-------------------------------------------------------------   ----------------------------------------------------------------------
+*****   EXTRA: Fix hearbleed  *****
+
+cd openssl_fix
+CC=afl-clang-fast ./config -d -g -no-shared
+AFL_USE_ASAN=1 make build_libs
+AFL_USE_ASAN=1 afl-clang-fast++ handshake.cc -o handshake_fix openssl_fix/libssl.a openssl_fix/libcrypto.a -I openssl_fix/include -ldl
