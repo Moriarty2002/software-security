@@ -1,0 +1,34 @@
+ curl -I https://dl.google.com/linux/chrome/deb/pool/main/g/google-chrome-stable/google-chrome-stable_149.0.7827.102-1_amd64.deb
+curl: (60) SSL certificate OpenSSL verify result: unable to get local issuer certificate (20)
+More details here: https://curl.se/docs/sslcerts.html
+
+curl failed to verify the legitimacy of the server and therefore could not
+establish a secure connection to it. To learn more about this situation and
+how to fix it, please visit the webpage mentioned above.
+╭─   ~                                                                                     14:05:55
+╰─❯ which curl
+type curl
+/usr/bin/curl
+curl is /usr/bin/curl
+╭─   ~                                                                                     14:06:46
+╰─❯ yay -Y --gendb
+AUR Explicit (9): accounts-qml-module, code-marketplace, google-chrome, neofetch, surfshark-client, yay-git, localsend-bin, qt5-websockets, visual-studio-code-bin
+:: PKGBUILD up to date, skipping download: code-marketplace
+:: PKGBUILD up to date, skipping download: google-chrome
+:: PKGBUILD up to date, skipping download: surfshark-client
+:: PKGBUILD up to date, skipping download: yay-git
+:: PKGBUILD up to date, skipping download: localsend-bin
+:: PKGBUILD up to date, skipping download: qt5-websockets
+:: PKGBUILD up to date, skipping download: visual-studio-code-bin
+:: (1/2) Downloaded PKGBUILD: accounts-qml-module
+:: (2/2) Downloaded PKGBUILD: neofetch
+:: (1/9) Parsing SRCINFO: localsend-bin
+:: (2/9) Parsing SRCINFO: visual-studio-code-bin
+:: (3/9) Parsing SRCINFO: accounts-qml-module
+:: (4/9) Parsing SRCINFO: neofetch
+:: (5/9) Parsing SRCINFO: surfshark-client
+:: (6/9) Parsing SRCINFO: qt5-websockets
+:: (7/9) Parsing SRCINFO: code-marketplace
+:: (8/9) Parsing SRCINFO: google-chrome
+:: (9/9) Parsing SRCINFO: yay-git
+:: GenDB finished. No packages were installed
